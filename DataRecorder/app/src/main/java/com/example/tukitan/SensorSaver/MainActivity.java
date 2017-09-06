@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] gyro = new float[3];
     private double[] attitude = new double[2];
     private int playCount = 0;
+    private String outputAttitude;
     double gravity;
     public int muki;
     File file, dataFile;
@@ -68,13 +69,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     View surface;
     Calendar calender;
     TextView nowState;
+    TextView consoleView;
     RadioGroup radioGroup;
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
 
     // log delay time
     Handler mHandler;
-    private long DELAY = (long) 0.01;
+    private long DELAY = (long) 1;
 
     String now;
     private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
@@ -93,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         surface = findViewById(R.id.isConnect);
         nowState = (TextView)findViewById(R.id.state);
+        consoleView = (TextView)findViewById(R.id.console_view);
         radioGroup = (RadioGroup) findViewById(R.id.group);
         radioGroup.setOnCheckedChangeListener(this);
         radioGroup.check(R.id.yokoState);
@@ -183,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f ,gravity:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec,gravity);
                 sValue.setText(viewString);
                 aValue.setText(attitudeString);*/
+                consoleView.setText(getOutputAngles());
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 magnetic = event.values.clone();
@@ -192,6 +196,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
 
+    }
+
+    private String getOutputAngles() {
+        double tmp;
+        String[] displayString = new String[2];
+        for(int i=0;i<2;i++){
+            if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
+            else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
+            else tmp = initalizeAttitude[i] - attitude[i];
+            displayString[i] = String.format("%+3.4f",tmp * 180 / Math.PI);
+        }
+
+        return displayString[0] + "[deg], " + displayString[1] + "[deg]";
+        //return "10[deg], 20[deg]";
     }
 
     @Override
@@ -295,8 +313,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 String.format("%.5f",magnetic[0]) + "," + String.format("%.5f",magnetic[1]) + "," + String.format("%.5f",magnetic[2]) + "," +
                 String.format("%.5f",gyro[0]) + "," + String.format("%.5f",gyro[1]) + "," + String.format("%.5f",gyro[2]) + "\r\n";
 
-        String outputAttitude = System.currentTimeMillis() -startTime + "," +
-                str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
         FileOutputStream fos = null;
         FileOutputStream fos2 = null;
         try {
